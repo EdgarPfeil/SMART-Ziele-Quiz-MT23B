@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f8fb">
+  <title>SMART-Ziele – Interaktives Quiz</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #eff6ff;
+      --background: #f6f8fb;
+      --surface: #fff;
+      --text: #172033;
+      --secondary: #64748b;
+      --border: #e2e8f0;
+      --success: #15803d;
+      --success-bg: #f0fdf4;
+      --success-border: #86efac;
+      --error: #b91c1c;
+      --error-bg: #fef2f2;
+      --error-border: #fca5a5;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: var(--background);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      line-height: 1.6;
+    }
+    [hidden] { display: none !important; }
+    button { font: inherit; }
+    button:focus-visible, a:focus-visible {
+      outline: 3px solid var(--primary);
+      outline-offset: 3px;
+    }
+    .app {
+      width: min(100% - 32px, 800px);
+      margin: auto;
+      padding: 42px 0 50px;
+    }
+    .header { text-align: center; margin-bottom: 30px; }
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 6px 13px;
+      border: 1px solid #bfdbfe;
+      border-radius: 100px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 6vw, 44px);
+      font-weight: 800;
+      letter-spacing: -1.3px;
+      line-height: 1.2;
+    }
+    h1 span { color: var(--primary); }
+    .header p { max-width: 540px; margin: 14px auto 0; color: var(--secondary); }
+    .panel {
+      padding: clamp(22px, 5vw, 38px);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--surface);
+      box-shadow: 0 8px 35px rgba(15, 23, 42, .06);
+    }
+    .section-title {
+      margin: 0 0 12px;
+      font-size: clamp(22px, 4vw, 27px);
+      letter-spacing: -.5px;
+      line-height: 1.35;
+    }
+    .muted { color: var(--secondary); }
+    .intro-text { margin-top: 0; }
+    .smart-overview {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 9px;
+      margin: 27px 0;
+    }
+    .smart-item {
+      min-width: 0;
+      padding: 15px 5px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #f8fafc;
+      text-align: center;
+    }
+    .smart-letter {
+      display: block;
+      color: var(--primary);
+      font-size: 27px;
+      font-weight: 850;
+      line-height: 1.2;
+    }
+    .smart-meaning {
+      display: block;
+      margin-top: 6px;
+      color: #475569;
+      font-size: 10px;
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }
+    .quiz-facts { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 26px; }
+    .fact {
+      padding: 8px 12px;
+      border-radius: 9px;
+      background: #f1f5f9;
+      color: #475569;
+      font-size: 13px;
+      font-weight: 650;
+    }
+    .instruction {
+      margin: 0 0 24px;
+      padding: 15px 17px;
+      border-left: 3px solid var(--primary);
+      border-radius: 0 9px 9px 0;
+      background: #f8fafc;
+      color: #475569;
+      font-size: 14px;
+    }
+    .button {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 52px;
+      padding: 12px 22px;
+      border: 0;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 750;
+      text-align: center;
+      transition: background .15s, transform .15s;
+    }
+    .button:active { transform: scale(.985); }
+    .button-primary { background: var(--primary); color: #fff; }
+    .button-primary:hover { background: var(--primary-dark); }
+    .button-secondary { border: 1px solid var(--border); background: #fff; color: var(--text); }
+    .button-secondary:hover { background: #f8fafc; }
+    .button-full { width: 100%; }
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 13px;
+      font-size: 13px;
+      font-weight: 750;
+    }
+    .counter { color: var(--primary); }
+    .score { color: var(--secondary); }
+    .progress-track { height: 9px; border-radius: 99px; background: #e9eef5; overflow: hidden; }
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--primary);
+      transition: width .25s;
+    }
+    .question-meta { margin: 31px 0 14px; }
+    .question-type {
+      display: inline-block;
+      padding: 6px 11px;
+      border-radius: 7px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 750;
+    }
+    .question-title {
+      margin: 0 0 13px;
+      font-size: clamp(21px, 4.3vw, 27px);
+      line-height: 1.4;
+      letter-spacing: -.5px;
+    }
+    .question-description { margin: 0 0 22px; color: var(--secondary); font-size: 14px; }
+    .case-study {
+      margin: 10px 0 22px;
+      padding: 19px;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      border-radius: 12px;
+      background: #f8fafc;
+      color: #334155;
+      font-size: 15px;
+    }
+    .answers { display: grid; gap: 11px; }
+    .answer {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      min-height: 62px;
+      padding: 14px 17px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      text-align: left;
+      font-size: 14px;
+      transition: border-color .15s, background .15s;
+    }
+    .answer:not(:disabled):hover { border-color: var(--primary); background: #f8fbff; }
+    .answer:disabled { cursor: default; }
+    .answer-letter {
+      display: flex;
+      flex: 0 0 32px;
+      justify-content: center;
+      align-items: center;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #f8fafc;
+      color: var(--secondary);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .answer-text { flex: 1; min-width: 0; }
+    .answer-icon { margin-left: auto; font-size: 18px; font-weight: 800; }
+    .answer.is-correct { border-color: var(--success-border); background: var(--success-bg); }
+    .answer.is-correct .answer-letter {
+      border-color: var(--success-border);
+      background: #dcfce7;
+      color: var(--success);
+    }
+    .answer.is-wrong { border-color: var(--error-border); background: var(--error-bg); }
+    .answer.is-wrong .answer-letter {
+      border-color: var(--error-border);
+      background: #fee2e2;
+      color: var(--error);
+    }
+    .answer.is-neutral { opacity: .55; }
+    .feedback {
+      margin-top: 23px;
+      padding: 20px;
+      border: 1px solid;
+      border-radius: 12px;
+      outline: none;
+    }
+    .feedback.success { border-color: var(--success-border); background: var(--success-bg); }
+    .feedback.error { border-color: var(--error-border); background: var(--error-bg); }
+    .feedback-title { margin: 0 0 7px; font-size: 17px; }
+    .feedback.success .feedback-title { color: var(--success); }
+    .feedback.error .feedback-title { color: var(--error); }
+    .feedback p { margin: 0; color: #334155; font-size: 14px; }
+    .correct-answer { margin-top: 10px !important; font-weight: 700; }
+    .question-actions { display: flex; justify-content: flex-end; margin-top: 23px; }
+    .result-header { text-align: center; }
+    .result-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 17px;
+      border-radius: 20px;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 34px;
+      font-weight: 800;
+    }
+    .result-header h2 { margin: 0; font-size: clamp(24px, 5vw, 31px); }
+    .result-header p { margin: 11px auto 0; color: var(--secondary); }
+    .result-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 28px 0; }
+    .stat {
+      padding: 22px 12px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: #f8fafc;
+      text-align: center;
+    }
+    .stat-value {
+      display: block;
+      color: var(--primary);
+      font-size: clamp(30px, 6vw, 40px);
+      font-weight: 850;
+      line-height: 1.2;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-label { display: block; margin-top: 7px; color: var(--secondary); font-size: 13px; }
+    .result-message {
+      padding: 18px 20px;
+      margin-bottom: 28px;
+      border-radius: 12px;
+      background: var(--primary-light);
+      color: #1e3a8a;
+      font-size: 14px;
+    }
+    .review-title { margin: 0 0 8px; font-size: 19px; }
+    .review-note { margin: 0 0 16px; color: var(--secondary); font-size: 13px; }
+    .review-list { display: grid; gap: 10px; }
+    .review-item { padding: 15px 17px; border: 1px solid var(--border); border-radius: 11px; }
+    .review-top { display: flex; gap: 11px; align-items: flex-start; }
+    .review-status {
+      display: flex;
+      flex: 0 0 25px;
+      align-items: center;
+      justify-content: center;
+      height: 25px;
+      border-radius: 50%;
+      font-weight: 800;
+    }
+    .review-status.correct { background: #dcfce7; color: var(--success); }
+    .review-status.wrong { background: #fee2e2; color: var(--error); }
+    .review-question { margin: 0; font-size: 14px; font-weight: 700; }
+    .review-detail { margin: 9px 0 0 36px; color: var(--secondary); font-size: 13px; }
+    .review-detail p { margin: 0 0 5px; }
+    .review-detail p:last-child { margin-bottom: 0; }
+    .review-retry { color: var(--error); font-weight: 650; }
+    .result-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+    .result-actions .button { flex: 1 1 180px; }
+    .footer {
+      margin-top: 30px;
+      padding: 20px 12px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: #94a3b8;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+    .footer-heading { margin: 0 0 5px; color: var(--secondary); font-weight: 700; }
+    .footer p { margin: 3px 0; }
+    .footer a { color: var(--secondary); text-underline-offset: 3px; overflow-wrap: anywhere; }
+    .footer a:hover { color: var(--primary); }
+    .footer-bottom { margin-top: 13px !important; font-size: 11px; }
+
+    @media (max-width: 520px) {
+      .app { width: min(100% - 24px, 800px); padding-top: 26px; }
+      .header { margin-bottom: 24px; }
+      .panel { padding: 22px 18px; border-radius: 15px; }
+      .smart-overview { gap: 5px; }
+      .smart-item { padding: 12px 3px; border-radius: 9px; }
+      .smart-letter { font-size: 24px; }
+      .smart-meaning { font-size: 9px; }
+      .answer { min-height: 64px; padding: 13px 12px; gap: 11px; }
+      .answer-letter { flex-basis: 29px; height: 29px; }
+      .question-actions .button { width: 100%; }
+      .stat { padding: 18px 8px; }
+      .case-study { padding: 15px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+<main class="app">
+  <header class="header">
+    <div class="eyebrow">Projektmanagement · Lernquiz</div>
+    <h1>Wie <span>SMART</span> bist du?</h1>
+    <p>Teste dein Wissen über SMART-Ziele und finde heraus, wie gut du Ziele formulieren und bewerten kannst.</p>
+  </header>
+
+  <section class="panel" id="start-screen">
+    <h2 class="section-title">Willkommen zum SMART-Quiz!</h2>
+    <p class="intro-text muted">Gute Ziele sind klar, überprüfbar und erreichbar. Die SMART-Methode hilft dir dabei, aus allgemeinen Wünschen konkrete Zielsetzungen zu entwickeln.</p>
+
+    <div class="smart-overview" aria-label="Die fünf SMART-Kriterien">
+      <div class="smart-item"><span class="smart-letter">S</span><span class="smart-meaning">Spezifisch</span></div>
+      <div class="smart-item"><span class="smart-letter">M</span><span class="smart-meaning">Messbar</span></div>
+      <div class="smart-item"><span class="smart-letter">A</span><span class="smart-meaning">Attraktiv / Akzeptiert</span></div>
+      <div class="smart-item"><span class="smart-letter">R</span><span class="smart-meaning">Realistisch</span></div>
+      <div class="smart-item"><span class="smart-letter">T</span><span class="smart-meaning">Terminiert</span></div>
+    </div>
+
+    <div class="quiz-facts">
+      <span class="fact">8 Fragen</span>
+      <span class="fact">3 Fragetypen</span>
+      <span class="fact">Zufällige Reihenfolge</span>
+    </div>
+
+    <p class="instruction"><strong>So funktioniert's:</strong><br>
+      Wähle jeweils eine Antwort aus. Du bekommst sofort Feedback und am Ende eine Auswertung. Bei jedem neuen Durchlauf werden die Fragen und Antworten gemischt. Falsch beantwortete Fragen werden in der Schlussübersicht ohne Lösung angezeigt.
+    </p>
+
+    <button class="button button-primary button-full" id="start-button" type="button">Quiz starten →</button>
+  </section>
+
+  <section class="panel" id="quiz-screen" hidden>
+    <div class="progress-header">
+      <span class="counter" id="question-counter">Frage 1 von 8</span>
+      <span class="score" id="live-score">0 Punkte</span>
+    </div>
+    <div class="progress-track" id="progress-track" role="progressbar" aria-label="Quizfortschritt" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+    <div class="question-meta"><span class="question-type" id="question-type"></span></div>
+    <h2 class="question-title" id="question-title" tabindex="-1"></h2>
+    <p class="question-description" id="question-description" hidden></p>
+    <blockquote class="case-study" id="case-study" hidden></blockquote>
+    <div class="answers" id="answers" role="group" aria-label="Antwortmöglichkeiten"></div>
+    <div class="feedback" id="feedback" tabindex="-1" aria-live="polite" hidden>
+      <h3 class="feedback-title" id="feedback-title"></h3>
+      <p id="feedback-explanation"></p>
+      <p class="correct-answer" id="correct-answer" hidden></p>
+    </div>
+    <div class="question-actions">
+      <button class="button button-primary" id="next-button" type="button" hidden>Nächste Frage →</button>
+    </div>
+  </section>
+
+  <section class="panel" id="result-screen" hidden>
+    <div class="result-header">
+      <div class="result-icon" id="result-icon" aria-hidden="true">★</div>
+      <h2 id="result-heading" tabindex="-1">Quiz abgeschlossen!</h2>
+      <p id="result-subtitle"></p>
+    </div>
+    <div class="result-stats">
+      <div class="stat"><span class="stat-value" id="result-points">0/8</span><span class="stat-label">Richtige Antworten</span></div>
+      <div class="stat"><span class="stat-value" id="result-percentage">0 %</span><span class="stat-label">Erfolgsquote</span></div>
+    </div>
+    <div class="result-message" id="result-message"></div>
+    <h3 class="review-title">Deine Antworten im Überblick</h3>
+    <p class="review-note">Bei falschen Antworten bleibt die richtige Lösung verborgen. Versuche es beim nächsten Mal erneut!</p>
+    <div class="review-list" id="review-list"></div>
+    <div class="result-actions">
+      <button class="button button-primary" id="restart-button" type="button">↻ Quiz neu starten</button>
+      <button class="button button-secondary" id="overview-button" type="button">Zur Übersicht</button>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p class="footer-heading">Quellen &amp; Erstellung</p>
+    <p>Inhaltliche Grundlage:
+      <a href="https://www.projektmagazin.de/glossarterm/smart-ziele" target="_blank" rel="noopener noreferrer">Projektmagazin – SMART-Ziele</a>
+    </p>
+    <p>Konzeption und technische Umsetzung mit Unterstützung von ChatGPT (OpenAI), Oktober 2026.</p>
+    <p class="footer-bottom">SMART-Ziele · Interaktives Lernquiz · Projektmanagement</p>
+  </footer>
+</main>
+
+<script>
+"use strict";
+
+// Inhaltliche Grundlage: https://www.projektmagazin.de/glossarterm/smart-ziele
+// Erstellt mit Unterstützung von ChatGPT (OpenAI), Oktober 2026.
+
+// Fragenbank bleibt unverändert. Für jeden Durchlauf wird eine neue,
+// unabhängig gemischte Kopie erzeugt.
+const questionBank = [
+  {
+    id: 1,
+    type: "Multiple Choice",
+    title: "Wofür steht das S in der SMART-Methode?",
+    description: "Wähle die richtige Bedeutung des ersten Buchstabens.",
+    options: ["Spezifisch", "Schnell", "Schriftlich", "Sichtbar"],
+    correct: 0,
+    explanation: "S steht für spezifisch. Ein Ziel muss eindeutig und verständlich beschreiben, was genau erreicht werden soll. Allgemeine Aussagen wie „Wir wollen besser werden“ sind zu ungenau.",
+    topic: "Spezifisch"
+  },
+  {
+    id: 2,
+    type: "Multiple Choice",
+    title: "Was macht ein Ziel messbar?",
+    description: "Welches Merkmal gehört zum M der SMART-Methode?",
+    options: [
+      "Das Ziel wird möglichst motivierend formuliert.",
+      "Der Erfolg kann anhand konkreter Zahlen oder überprüfbarer Kriterien festgestellt werden.",
+      "Das Ziel wird von allen Beteiligten akzeptiert.",
+      "Das Ziel muss besonders anspruchsvoll sein."
+    ],
+    correct: 1,
+    explanation: "Messbar bedeutet, dass objektiv überprüft werden kann, ob das Ziel erreicht wurde. Dazu eignen sich beispielsweise Stückzahlen, Prozentwerte, Fehlerquoten oder festgelegte Qualitätskriterien.",
+    topic: "Messbar"
+  },
+  {
+    id: 3,
+    type: "Multiple Choice",
+    title: "Welche Aussage beschreibt das A am besten?",
+    description: "In diesem Quiz steht A für attraktiv bzw. akzeptiert.",
+    options: [
+      "Das Ziel muss ohne jede Anstrengung erreichbar sein.",
+      "Das Ziel muss möglichst viele Arbeitsschritte enthalten.",
+      "Das Ziel soll sinnvoll und motivierend sein und von den Beteiligten mitgetragen werden.",
+      "Das Ziel muss ausschließlich vom Vorgesetzten bestimmt werden."
+    ],
+    correct: 2,
+    explanation: "Ein attraktives Ziel bietet einen erkennbaren Nutzen und motiviert zur Umsetzung. Akzeptiert bedeutet, dass die Beteiligten hinter dem Ziel stehen. Beide Begriffe sind gebräuchliche Interpretationen des A.",
+    topic: "Attraktiv / Akzeptiert"
+  },
+  {
+    id: 4,
+    type: "Richtig oder Falsch",
+    title: "Ein realistisches Ziel berücksichtigt die vorhandenen Ressourcen und den verfügbaren Zeitraum.",
+    description: "Entscheide, ob diese Aussage richtig oder falsch ist.",
+    options: ["Richtig", "Falsch"],
+    correct: 0,
+    explanation: "Richtig. Ein realistisches Ziel muss unter den gegebenen Bedingungen erreichbar sein. Dazu gehören Zeit, Personal, Fähigkeiten und verfügbare Mittel. Ein Ziel darf anspruchsvoll sein, sollte aber nicht von vornherein unerreichbar erscheinen.",
+    topic: "Realistisch"
+  },
+  {
+    id: 5,
+    type: "Richtig oder Falsch",
+    title: "Ein Ziel ist automatisch SMART, sobald ein konkreter Fertigstellungstermin angegeben ist.",
+    description: "Prüfe, ob ein Termin allein ausreicht.",
+    options: ["Richtig", "Falsch"],
+    correct: 1,
+    explanation: "Falsch. Ein fester Termin erfüllt nur das Kriterium T. Damit das Ziel vollständig SMART formuliert ist, müssen auch die anderen vier Kriterien berücksichtigt werden. „Wir arbeiten bis Freitag besser“ reicht beispielsweise nicht aus.",
+    topic: "Terminiert"
+  },
+  {
+    id: 6,
+    type: "Praxisbeispiel",
+    title: "Ist dieses Projektziel vollständig SMART formuliert?",
+    description: "Lies das Praxisbeispiel und bewerte die Zielformulierung.",
+    caseText: "Ein dreiköpfiges Wartungsteam möchte bis zum 30. November 2026 insgesamt 30 geplante Maschinenprüfungen in einer digitalen Checkliste dokumentieren, um fehlende Prüfnachweise zu vermeiden. Alle Teammitglieder stimmen dem Ziel zu. Die Durchführung ist mit dem vorhandenen Personal und den verfügbaren Geräten machbar.",
+    options: [
+      "Ja, das Ziel erfüllt alle fünf SMART-Kriterien.",
+      "Nein, das Ziel ist nicht vollständig SMART."
+    ],
+    correct: 0,
+    explanation: "Das Ziel ist spezifisch (Maschinenprüfungen dokumentieren), messbar (30 Prüfungen), akzeptiert und sinnvoll (Teamzustimmung und Nutzen), realistisch (Ressourcen vorhanden) und terminiert (30. November 2026). Damit sind alle fünf Kriterien erfüllt.",
+    topic: "SMART in der Praxis"
+  },
+  {
+    id: 7,
+    type: "Praxisbeispiel",
+    title: "Ist dieses Ziel SMART formuliert?",
+    description: "Bewerte die folgende Aussage aus dem Arbeitsalltag.",
+    caseText: "„Wir möchten in Zukunft deutlich effizienter arbeiten und unsere Arbeitsqualität verbessern.“",
+    options: [
+      "Ja, das Ziel ist vollständig SMART.",
+      "Nein, wichtige SMART-Kriterien fehlen."
+    ],
+    correct: 1,
+    explanation: "Das Ziel ist zu allgemein. Es fehlt die konkrete Beschreibung der Verbesserung, ein messbares Erfolgskriterium und ein Termin. Auch Akzeptanz und Machbarkeit sind nicht geklärt. Eine bessere Formulierung wäre beispielsweise: „Unser Team reduziert bis zum 31. Dezember die Nacharbeitsquote von 8 % auf 5 %.“ Die Machbarkeit und Akzeptanz müssten zusätzlich geprüft werden.",
+    topic: "SMART in der Praxis"
+  },
+  {
+    id: 8,
+    type: "Praxisbeispiel",
+    title: "Welches wichtige SMART-Kriterium fehlt hier?",
+    description: "Prüfe, welche der fünf Anforderungen noch nicht erfüllt ist.",
+    caseText: "Das Werkstattteam reduziert den monatlichen Stromverbrauch um 10 %, gemessen gegenüber dem Verbrauch im September 2026. Die Mitarbeitenden unterstützen das Vorhaben, und die notwendigen technischen Maßnahmen sind mit den vorhandenen Mitteln umsetzbar.",
+    options: ["S – Spezifisch", "M – Messbar", "R – Realistisch", "T – Terminiert"],
+    correct: 3,
+    explanation: "Es fehlt ein verbindlicher Zieltermin. Der September 2026 ist lediglich der Vergleichszeitraum für die Messung. Er legt nicht fest, bis wann die Verbrauchsreduzierung erreicht sein muss. Eine Ergänzung wäre: „Spätestens bis zum 31. März 2027.“",
+    topic: "Terminiert"
+  }
+];
+
+// Fisher-Yates: Jede mögliche Reihenfolge kann entstehen.
+function shuffle(items) {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+let previousOrder = null;
+
+function createQuizRun() {
+  // Jede Antwort erhält zunächst ihr korrektes Kennzeichen.
+  const shuffledQuestions = questionBank.map(question => {
+    const options = shuffle(question.options.map((text, index) => ({
+      text,
+      isCorrect: index === question.correct
+    })));
+
+    return {
+      ...question,
+      options: options.map(option => option.text),
+      correct: options.findIndex(option => option.isCorrect)
+    };
+  });
+
+  const run = shuffle(shuffledQuestions);
+  const order = run.map(question => question.id).join(",");
+
+  // Bei einem unmittelbaren Neustart niemals die identische
+  // Fragenreihenfolge wie im vorherigen Durchlauf anzeigen.
+  if (order === previousOrder && run.length > 1) {
+    [run[0], run[1]] = [run[1], run[0]];
+  }
+
+  previousOrder = run.map(question => question.id).join(",");
+  return run;
+}
+
+const state = {
+  questions: [],
+  currentQuestion: 0,
+  score: 0,
+  answered: false,
+  responses: []
+};
+
+const elements = {
+  startScreen: document.getElementById("start-screen"),
+  quizScreen: document.getElementById("quiz-screen"),
+  resultScreen: document.getElementById("result-screen"),
+  startButton: document.getElementById("start-button"),
+  restartButton: document.getElementById("restart-button"),
+  overviewButton: document.getElementById("overview-button"),
+  nextButton: document.getElementById("next-button"),
+  questionCounter: document.getElementById("question-counter"),
+  liveScore: document.getElementById("live-score"),
+  progressTrack: document.getElementById("progress-track"),
+  progressFill: document.getElementById("progress-fill"),
+  questionType: document.getElementById("question-type"),
+  questionTitle: document.getElementById("question-title"),
+  questionDescription: document.getElementById("question-description"),
+  caseStudy: document.getElementById("case-study"),
+  answers: document.getElementById("answers"),
+  feedback: document.getElementById("feedback"),
+  feedbackTitle: document.getElementById("feedback-title"),
+  feedbackExplanation: document.getElementById("feedback-explanation"),
+  correctAnswer: document.getElementById("correct-answer"),
+  resultIcon: document.getElementById("result-icon"),
+  resultHeading: document.getElementById("result-heading"),
+  resultSubtitle: document.getElementById("result-subtitle"),
+  resultPoints: document.getElementById("result-points"),
+  resultPercentage: document.getElementById("result-percentage"),
+  resultMessage: document.getElementById("result-message"),
+  reviewList: document.getElementById("review-list")
+};
+
+function showScreen(screen) {
+  elements.startScreen.hidden = screen !== "start";
+  elements.quizScreen.hidden = screen !== "quiz";
+  elements.resultScreen.hidden = screen !== "result";
+  window.scrollTo({ top: 0, behavior: "auto" });
+}
+
+function createElement(tag, className, text) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
+  return element;
+}
+
+function updateProgress() {
+  const completed = state.responses.length;
+  const percentage = completed / state.questions.length * 100;
+  elements.questionCounter.textContent =
+    `Frage ${state.currentQuestion + 1} von ${state.questions.length}`;
+  elements.liveScore.textContent =
+    `${state.score} ${state.score === 1 ? "Punkt" : "Punkte"}`;
+  elements.progressFill.style.width = `${percentage}%`;
+  elements.progressTrack.setAttribute("aria-valuenow", String(completed));
+}
+
+function startQuiz() {
+  state.questions = createQuizRun();
+  state.currentQuestion = 0;
+  state.score = 0;
+  state.answered = false;
+  state.responses = [];
+  showScreen("quiz");
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const question = state.questions[state.currentQuestion];
+  state.answered = false;
+  updateProgress();
+
+  elements.questionType.textContent = question.type;
+  elements.questionTitle.textContent = question.title;
+  elements.questionDescription.textContent = question.description || "";
+  elements.questionDescription.hidden = !question.description;
+  elements.caseStudy.textContent = question.caseText || "";
+  elements.caseStudy.hidden = !question.caseText;
+  elements.answers.replaceChildren();
+  elements.feedback.hidden = true;
+  elements.feedback.className = "feedback";
+  elements.correctAnswer.hidden = true;
+  elements.nextButton.hidden = true;
+
+  question.options.forEach((option, index) => {
+    const button = createElement("button", "answer");
+    button.type = "button";
+    const letter = createElement("span", "answer-letter", String.fromCharCode(65 + index));
+    letter.setAttribute("aria-hidden", "true");
+    button.appendChild(letter);
+    button.appendChild(createElement("span", "answer-text", option));
+    button.addEventListener("click", () => selectAnswer(index));
+    elements.answers.appendChild(button);
+  });
+
+  elements.questionTitle.focus({ preventScroll: true });
+}
+
+function selectAnswer(selectedIndex) {
+  if (state.answered) return;
+
+  const question = state.questions[state.currentQuestion];
+  const isCorrect = selectedIndex === question.correct;
+  state.answered = true;
+  if (isCorrect) state.score++;
+
+  state.responses.push({
+    questionIndex: state.currentQuestion,
+    selectedIndex,
+    correct: isCorrect
+  });
+
+  const buttons = elements.answers.querySelectorAll(".answer");
+  buttons.forEach((button, index) => {
+    button.disabled = true;
+    if (index === question.correct) {
+      button.classList.add("is-correct");
+      button.appendChild(createElement("span", "answer-icon", "✓"));
+    } else if (index === selectedIndex) {
+      button.classList.add("is-wrong");
+      button.appendChild(createElement("span", "answer-icon", "✕"));
+    } else {
+      button.classList.add("is-neutral");
+    }
+  });
+
+  elements.feedback.className = `feedback ${isCorrect ? "success" : "error"}`;
+  elements.feedbackTitle.textContent = isCorrect ? "✓ Richtig beantwortet!" : "✕ Leider falsch!";
+  elements.feedbackExplanation.textContent = question.explanation;
+
+  // Direktes Feedback bleibt erhalten. Nur die spätere
+  // Schlussübersicht verrät die Lösung nicht mehr.
+  if (isCorrect) {
+    elements.correctAnswer.hidden = true;
+  } else {
+    elements.correctAnswer.textContent = `Richtige Antwort: ${question.options[question.correct]}`;
+    elements.correctAnswer.hidden = false;
+  }
+
+  elements.feedback.hidden = false;
+  elements.nextButton.textContent =
+    state.currentQuestion === state.questions.length - 1 ? "Ergebnis ansehen →" : "Nächste Frage →";
+  elements.nextButton.hidden = false;
+  updateProgress();
+
+  elements.feedback.focus({ preventScroll: true });
+  elements.feedback.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function nextQuestion() {
+  if (!state.answered) return;
+  if (state.currentQuestion < state.questions.length - 1) {
+    state.currentQuestion++;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+}
+
+function getEvaluation(percentage) {
+  if (percentage === 100) return {
+    heading: "Perfekt! Alles richtig!",
+    subtitle: "Du beherrschst die SMART-Methode hervorragend.",
+    icon: "★",
+    message: "Ausgezeichnet! Du kannst die fünf SMART-Kriterien sicher unterscheiden und auf Praxisbeispiele anwenden."
+  };
+  if (percentage >= 75) return {
+    heading: "Sehr gut gemacht!",
+    subtitle: "Du hast ein gutes Verständnis der SMART-Methode.",
+    icon: "✓",
+    message: "Du kennst die wesentlichen SMART-Kriterien. Versuche die falsch beantworteten Aufgaben in einer neuen Runde erneut."
+  };
+  if (percentage >= 50) return {
+    heading: "Gute Grundlage!",
+    subtitle: "Du bist auf dem richtigen Weg.",
+    icon: "↗",
+    message: "Du hast wichtige Grundlagen verstanden. Wiederhole die Kriterien, bei denen du Fehler gemacht hast, und prüfe jedes Praxisziel anhand aller fünf Merkmale."
+  };
+  return {
+    heading: "Weiter üben!",
+    subtitle: "Mit etwas Übung wirst du sicherer.",
+    icon: "↻",
+    message: "Wiederhole die fünf SMART-Kriterien: spezifisch, messbar, attraktiv beziehungsweise akzeptiert, realistisch und terminiert. Probiere danach eine neue Quizrunde."
+  };
+}
+
+function showResults() {
+  const percentage = Math.round(state.score / state.questions.length * 100);
+  const evaluation = getEvaluation(percentage);
+  elements.resultHeading.textContent = evaluation.heading;
+  elements.resultSubtitle.textContent = evaluation.subtitle;
+  elements.resultIcon.textContent = evaluation.icon;
+  elements.resultPoints.textContent = `${state.score}/${state.questions.length}`;
+  elements.resultPercentage.textContent = `${percentage} %`;
+  elements.resultMessage.textContent = evaluation.message;
+  createReview();
+  showScreen("result");
+  elements.resultHeading.focus({ preventScroll: true });
+}
+
+function createReview() {
+  elements.reviewList.replaceChildren();
+
+  state.responses.forEach((response, index) => {
+    // Wichtig: Die Zuordnung bezieht sich auf die gemischte
+    // Fragenliste und die ebenfalls gemischten Optionen.
+    const question = state.questions[response.questionIndex];
+    const item = createElement("article", "review-item");
+    const top = createElement("div", "review-top");
+    const status = createElement(
+      "span",
+      `review-status ${response.correct ? "correct" : "wrong"}`,
+      response.correct ? "✓" : "✕"
+    );
+    status.setAttribute("aria-label", response.correct ? "Richtig" : "Falsch");
+    top.appendChild(status);
+    top.appendChild(createElement("p", "review-question", `${index + 1}. ${question.title}`));
+    item.appendChild(top);
+
+    const detail = createElement("div", "review-detail");
+    if (response.correct) {
+      detail.appendChild(createElement("p", "", "Richtig beantwortet."));
+    } else {
+      detail.appendChild(createElement(
+        "p", "", `Deine Antwort: ${question.options[response.selectedIndex]}`
+      ));
+      detail.appendChild(createElement(
+        "p", "review-retry", "Lösung ausgeblendet – versuche es erneut."
+      ));
+      // Absichtlich KEINE richtige Antwort und KEINE Erklärung.
+    }
+
+    item.appendChild(detail);
+    elements.reviewList.appendChild(item);
+  });
+}
+
+function returnToOverview() {
+  state.currentQuestion = 0;
+  state.score = 0;
+  state.answered = false;
+  state.responses = [];
+  state.questions = [];
+  showScreen("start");
+  elements.startButton.focus({ preventScroll: true });
+}
+
+// Ereignisse und Initialisierung
+ elements.startButton.addEventListener("click", startQuiz);
+ elements.nextButton.addEventListener("click", nextQuestion);
+ elements.restartButton.addEventListener("click", startQuiz);
+ elements.overviewButton.addEventListener("click", returnToOverview);
+ elements.progressTrack.setAttribute("aria-valuemax", String(questionBank.length));
+ showScreen("start");
+</script>
+</body>
+</html>
